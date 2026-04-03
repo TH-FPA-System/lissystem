@@ -1,0 +1,77 @@
+﻿@model lissystem.Models.Form.Planner.OrderScheduler.OrderCancelFormRequest
+
+<div id="modalDetail" class="modal-content">
+    <div class="modal-header flex-column align-items-start py-2">
+        <h5 id="modalTitle" class="modal-title"><i class="bi bi-x-circle me-2"></i>Order Cancel form</h5>
+    </div>
+    <div class="modal-body px-2 py-0">
+        <form id="frmOrderCancel" action="" method="post" class="mt-1">
+            @Html.AntiForgeryToken()
+            <table class="table align-middle table-striped">
+                <thead>
+                    <tr>
+                        <th>Order no.</th>
+                        <th>Line no.</th>
+                        <th>Split no.</th>
+                        <th>QTY Request</th>
+                        <th>QTY ToGo</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @for (int i = 0; i < Model.data.Count(); i++)
+                    {
+                        <tr>
+                            @Html.HiddenFor(p => p.data[i].order_no)
+                            @Html.HiddenFor(p => p.data[i].line_no)
+                            @Html.HiddenFor(p => p.data[i].split_no)
+                            <td>@Model.data[i].order_no</td>
+                            <td>@Model.data[i].line_no</td>
+                            <td>@Model.data[i].split_no</td>
+                            <td>@string.Format("{0:n0}", Model.data[i].qty_reqd)</td>
+                            <td>@string.Format("{0:n0}", Model.data[i].qty_togo)</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </form>
+    </div>
+    <div class="modal-footer px-2 py-1">
+        <button type="button" class="btn btn-sm btn-danger me-2" onclick="SubmitRequest()"><i class="bi bi-save me-1"></i>Cancel Order</button>
+        <button type="button" class="btn btn-sm btn-secondary" onclick="DismissPopupModal()">Cancel</button>
+    </div>
+</div>
+
+<script>
+    var frmValidate = $('#frmOrderCancel').validate();
+
+    function SubmitRequest() {
+        if (frmValidate.valid()) {
+            ConfirmDialog("Are you sure?", "Confirm to cancel the below Orders", "warning").then((res) => {
+                if (res) {
+                    let formData = $('#frmOrderCancel').serialize();
+                    $.post('@Url.Action("RequestOrderCancel")', formData)
+                        .done((data, status, jqXHR) => {
+                            if (jqXHR.status === 200) {
+                                TableReload();
+                                ShowToastSuccess("The Order been canceled.");
+                            }
+                            else {
+                                if (jqXHR.status === 304) {
+                                    ShowToastError("The order not update to cancel!");
+                                }
+                                else {
+                                    ShowToastError("Fail to cancel the order!");
+                                }
+                            }
+                            DismissPopupModal();
+                        })
+                        .fail((xhr, status, error) => {
+                            let errorData = xhr.responseJSON;
+                            ShowToastError(`<b>${errorData.message}</b>!`, "Error", 10000);
+                        });
+                }
+            });
+        }
+    }
+
+</script>

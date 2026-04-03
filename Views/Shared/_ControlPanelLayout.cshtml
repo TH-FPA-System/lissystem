@@ -1,0 +1,61 @@
+﻿<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+    <base href="@Url.Content("~")" />
+    <meta charset="utf-8" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="author" content="Akkapon Kaewarsa (First)." />
+    <meta name="description" content="TH-LIS management system." />
+    <title>LIS System - @ViewBag.Title</title>
+    @Styles.Render("~/overlayscrollbars-css")
+    <link href="@Url.Content("~/Vendors/bootstrap-icons/font/bootstrap-icons.min.css")" rel="stylesheet" />
+    @*<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">*@
+    @Styles.Render("~/adminlte/css")
+    @Styles.Render("~/bs-daterangepicker-css")
+    @Styles.Render("~/datatable-css")
+    @Styles.Render("~/select2css")
+    @Styles.Render("~/jquery-toast-css")
+    @Styles.Render("~/sweetalert2css")
+    @Styles.Render("~/lis/less")
+    @RenderSection("header", false)
+    @RenderSection("styles", false)
+</head>
+<body class="layout-fixed sidebar-mini dark-mode sidebar-expand-lg sidebar-collapse">
+    <div id="loading-spinner" class="loading">
+        <div class="spinner"></div>
+    </div>
+    <div class="app-wrapper">
+        @Html.Action("HeaderAndSideMenu", "LISPanel")
+        <main class="app-main">
+            @RenderBody()
+        </main>
+        @*@Html.Action("Footer", "LISPanel")*@
+    </div>
+    @Scripts.Render("~/overlayscrollbars-js")
+    @Scripts.Render("~/popper-umd")
+    @Scripts.Render("~/bootstrap/js")
+    @Scripts.Render("~/adminlte/js")
+    @Scripts.Render("~/JQuery")
+    @Scripts.Render("~/JQuery/plugins")
+    @Scripts.Render("~/momentjs")
+    @Scripts.Render("~/datatable-js")
+    @Scripts.Render("~/select2js")
+    @Scripts.Render("~/jquery-toast-js")
+    @Scripts.Render("~/sweetalert2js")
+    @Scripts.Render("~/fusioncharts")
+    @Scripts.Render("~/bs-daterangepicker-js")
+    @Scripts.Render("~/LISApp")
+    @RenderSection("footer", false)
+    @RenderSection("scripts", false)
+    @if (TempData["PreventBackButtonService"] != null && (bool)TempData["PreventBackButtonService"])
+    {
+        <script>
+            window.history.pushState(null, null, window.location.href);
+            window.onpopstate = function () {
+                window.history.go(1);
+            };
+        </script>
+    }
+</body>
+</html>

@@ -1,0 +1,33 @@
+﻿@model lissystem.Models.SystemError
+@{
+    Layout = "~/Views/Shared/_ErrorLayout.cshtml";
+    ViewBag.Title = "System error";
+}
+
+<div class="container-fluid h-100 text-center align-content-center" style="max-width: 1024px;">
+    <i class="bi bi-exclamation-diamond-fill" style="font-size: 4rem;"></i>
+    <h2 class="text-danger mb-3">Oops! System error @Model.errorStatus.ToString()</h2>
+    @switch (Model.errorStatus)
+    {
+        case 404:
+            <div class="alert alert-danger pb-0" role="alert">
+                <p>Your request page is notfound in LIS system</p>
+            </div>
+            <p><a href="@Url.Action("Index", "CPHome")" class="link-primary link-offset-2 link-underline-opacity-0">Go to home page</a></p>
+            break;
+        default:
+            <div class="alert alert-danger pb-0" role="alert">
+                @if (!string.IsNullOrEmpty(Model.message))
+                {
+                    <p>An system error occurred (@Model.message)</p>
+                    <p>@Model.innerMessage</p>
+                }
+                else
+                {
+                    <p>We're sorry, but something went wrong. Please try again later.</p>
+                }
+            </div>
+            <p>Please contact Web Administrator (CS&IT)</p>
+            break;
+    }
+</div>

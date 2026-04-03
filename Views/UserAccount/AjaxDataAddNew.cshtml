@@ -1,0 +1,122 @@
+﻿@model lissystem.Models.Form.FormSystemAccountView
+    
+<div id="modalDetail" class="modal-content">
+    <div class="modal-header flex-column align-items-start">
+        <h5 id="modalTitle" class="modal-title"><i class="bi bi-person-plus me-1"></i>Add new user account</h5>
+    </div>
+    <div class="modal-body px-2">
+        <form id="frmUserAccountEditor" method="post">
+            @Html.AntiForgeryToken()
+            
+            <div class="card shadow-none mb-2">
+                <div class="card-header py-2">
+                    <h6 class="mb-0"><i class="bi bi-key-fill me-2"></i>Security</h6>
+                </div>
+                <div class="card-body p-2">
+                    <div class="row mb-2">
+                        <div class="col-md-6">
+                            @Html.LabelFor(p => p.UserAccount.account_name, "Account name", new { @class = "form-label" })
+                            @Html.TextBoxFor(p => p.UserAccount.account_name, new { @class = "form-control", @required = "required", @maxlength = 48, @placeholder = "Enter account name.." })
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            @Html.LabelFor(p => p.UserAccount.account_name, "Password", new { @class = "form-label" })
+                            @Html.PasswordFor(p => p.UserAccount.password, new { @class = "form-control", @required = "required", @maxlength = 24, @placeholder = "Enter password.." })
+                        </div>
+                        <div class="col-md-6">
+                            @Html.LabelFor(p => p.UserAccount.account_name, "Confirm password", new { @class = "form-label" })
+                            @Html.PasswordFor(p => p.UserAccountSecurity.confirmPassword, new { @class = "form-control", @required = "required", @maxlength = 24, @placeholder = "Enter confirm password.." })
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card shadow-none mb-2">
+                <div class="card-header py-2">
+                    <h6 class="mb-0"><i class="bi bi-person-check me-2"></i>Details</h6>
+                </div>
+                <div class="card-body p-2">
+                    <div class="row">
+                        <div class="col-md-6 mb-2">
+                            @Html.LabelFor(p => p.UserAccount.Information.code, "Code", new { @class = "form-label" })
+                            @Html.TextBoxFor(p => p.UserAccount.Information.code, new { @class = "form-control", @required = "required", @maxlength = 12, @placeholder = "Enter account code.." })
+                        </div>
+                        <div class="col-md-12 mb-2">
+                            @Html.LabelFor(p => p.UserAccount.Information.display_name, "Display name", new { @class = "form-label" })
+                            @Html.TextBoxFor(p => p.UserAccount.Information.display_name, new { @class = "form-control", @required = "required", @maxlength = 64, @placeholder = "Enter account display name.." })
+                        </div>
+                        <div class="col-md-12 mb-2">
+                            @Html.LabelFor(p => p.UserAccount.Information.role_id, "User Role/Group", new { @class = "form-label" })
+                            @Html.DropDownListFor(p => p.UserAccount.Information.role_id, Model.RoleSelectListItem, new { @class = "form-select", @required = "required" })
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+    <div class="modal-footer px-2">
+        <button type="button" class="btn btn-success me-2" onclick="SubmitFormAdd()"><i class="bi bi-floppy2 me-1"></i>Add</button>
+        <button type="button" class="btn btn-secondary" onclick="DismissPopupModal()">Cancel</button>
+    </div>
+</div>
+
+<script>
+    $(document).ready(function () {
+        $('#frmUserAccountEditor').validate({
+            errorClass: "invalid-feedback",
+            rules: {
+                'UserAccount.account_name': {
+                    required: true
+                },
+                'UserAccount.password': {
+                    required: true
+                },
+                'UserAccountSecurity.confirmPassword': {
+                    required: true,
+                    equalTo: '#UserAccount_password'
+                }
+            },
+            messages: {
+                'UserAccount.account_name': {
+                    required: 'Required security account name!'
+                },
+                'UserAccount.password': {
+                    required: 'Required security password!'
+                },
+                'UserAccountSecurity.confirmPassword': {
+                    required: 'Required security confirm password!',
+                    equalTo: 'Password and confirm password do not match!'
+                }
+            },
+            submitHandler: function (frm) {
+                let formData = $(frm).serialize();
+                $.post('@Url.Action("AjaxDataAccountAdd")', formData)
+                    .done((data, status, jqXHR) => {
+                        if (jqXHR.status === 200) {
+                            TableReload();
+                            ShowToastSuccess("User account has been added");
+                        }
+                        else {
+                            if (jqXHR.status === 304) {
+                                ShowToastError("Can't add new User account!");
+                            }
+                            else {
+                                ShowToastError("Fail to add new user account!");
+                            }
+                        }
+                        DismissPopupModal();
+                    })
+                    .fail((xhr, status, error) => {
+                        let errorData = xhr.responseJSON;
+                        ShowToastError(`<b>${errorData.message}</b>!`, "Error", 10000);
+                    });
+                
+            }
+        });
+    });
+
+    function SubmitFormAdd() {
+        $('#frmUserAccountEditor').trigger('submit');
+    }
+</script>

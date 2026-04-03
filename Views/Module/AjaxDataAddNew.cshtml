@@ -1,0 +1,90 @@
+﻿@model lissystem.Models.SysModule
+
+<div id="modalDetail" class="modal-content">
+    <div class="modal-header flex-column align-items-start">
+        <h5 id="modalTitle" class="modal-title"><i class="bi bi-plus-circle-fill me-1"></i>Add new module</h5>
+    </div>
+    <div class="modal-body px-2">
+        <form id="frmSysModuleEditor" method="post">
+            @Html.AntiForgeryToken()
+            <div class="mb-2">
+                @Html.LabelFor(p => p.module_section, "Module Section", new { @class = "form-label" })
+                @Html.LISDropDownListFor(p => p.module_section, LISGlobal.SystemModuleSectionSelectList, new { @class = "form-select", @required = true })
+            </div>
+            <div class="mb-2">
+                @Html.LabelFor(p => p.submodule_section, "Sub Module Section", new { @class = "form-label" })
+                @Html.LISTextBoxFor(p => p.submodule_section, new { @class = "form-control" })
+            </div>
+            <div class="mb-2">
+                @Html.LabelFor(p => p.module_name, "Module name", new { @class = "form-label" })
+                @Html.LISTextBoxFor(p => p.module_name, new { @class = "form-control", @required = true })
+            </div>
+            <div class="mb-4">
+                @Html.LabelFor(p => p.module_description, "Description", new { @class = "form-label" })
+                @Html.LISTextBoxFor(p => p.module_description, new { @class = "form-control", @required = true })
+            </div>
+            <div class="row mb-2">
+                <div class="col-md-6">
+                    @Html.LabelFor(p => p.controller_name, "Controller name", new { @class = "form-label" })
+                    @Html.LISTextBoxFor(p => p.controller_name, new { @class = "form-control", @required = true })
+                </div>
+                <div class="col-md-6">
+                    @Html.LabelFor(p => p.action_name, "Action name", new { @class = "form-label" })
+                    @Html.LISTextBoxFor(p => p.action_name, new { @class = "form-control", @required = true })
+                </div>
+            </div>
+        </form>
+    </div>
+    <div class="modal-footer px-2">
+        <button type="button" class="btn btn-success me-2" onclick="SubmitFormAdd()"><i class="bi bi-floppy2 me-1"></i>Add</button>
+        <button type="button" class="btn btn-secondary" onclick="DismissPopupModal()">Cancel</button>
+    </div>
+</div>
+
+<script>
+
+    $('#frmSysModuleEditor').validate({
+        rules: {
+            'module_section': { required: true },
+            'module_name': { required: true },
+            'module_description': { required: true },
+            'controller_name': { required: true },
+            'action_name': { required: true },
+        },
+        messages: {
+            'module_section': { required: 'Required module section!' },
+            'module_name': { required: 'Required module name!' },
+            'module_description': { required: 'Required description!' },
+            'controller_name': { required: 'Required controller name!' },
+            'action_name': { required: 'Required action name!' },
+        },
+        submitHandler: function (frm) {
+            let formData = $(frm).serialize();
+            $.post('@Url.Action("AjaxDataModuleAdd")', formData)
+                .done((data, status, jqXHR) => {
+                    if (jqXHR.status === 200) {
+                        TableReload();
+                        ShowToastSuccess("System module has been added");
+                    }
+                    else {
+                        if (jqXHR.status === 304) {
+                            ShowToastError("Can't add new system module!");
+                        }
+                        else {
+                            ShowToastError("Fail to add new system module!");
+                        }
+                    }
+                    DismissPopupModal();
+                })
+                .fail((xhr, status, error) => {
+                    let errorData = xhr.responseJSON;
+                    ShowToastError(`<b>${errorData.message}</b>!`, "Error", 10000);
+                })
+        }
+    });
+
+    function SubmitFormAdd() {
+        $('#frmSysModuleEditor').trigger('submit');
+    }
+
+</script>

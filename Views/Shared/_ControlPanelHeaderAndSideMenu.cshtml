@@ -1,0 +1,105 @@
+﻿@model lissystem.Models.ControlPanelModel
+@*
+    Link icon: https://icons.getbootstrap.com/
+*@
+
+<!--begin:Header menu-->
+<nav class="app-header navbar navbar-expand bg-black user-select-none">
+    <div class="container-fluid">
+        <ul class="navbar-nav">
+            <li class="nav-item">
+                <a class="nav-link" data-lte-toggle="sidebar" href="#" role="button">
+                    <i class="bi bi-list"></i>
+                </a>
+            </li>
+            <li class="nav-item d-none d-md-block"><a class="nav-link ps-0"><i class="bi bi-clock me-1"></i><span id="currentTime"></span></a></li>
+        </ul>
+
+        <ul class="navbar-nav ms-auto">
+
+            <li class="nav-item">
+                <a href="#" class="nav-link px-2" role="button"><i class="bi bi-person-circle me-2"></i>@Model.UserAccountInfo.display_name</a>
+            </li>
+            <li class="nav-item">
+                <a href="@Url.Action("Logout", "Login")" class="nav-link px-2" role="button" title="Logout"><i class="bi bi-box-arrow-right"></i></a>
+            </li>
+        </ul>
+    </div>
+</nav>
+<!--end:Header menu-->
+<!--begin:Side menu-->
+<aside class="app-sidebar bg-body-secondary shadow user-select-none" data-bs-theme="dark">
+    <div class="sidebar-brand">
+        <a class="brand-link">
+            <span class="brand-text fw-semibold">TH LIS MANAGEMENT</span>
+        </a>
+    </div>
+
+    <div class="sidebar-wrapper">
+        <nav class="mt-2">
+            <ul class="nav sidebar-menu flex-column" data-lte-toggle="treeview" role="navigation" aria-label="navigation" data-accordion="false" id="navigation">
+
+                <!--begin:General menu-->
+                @Html.LISModuleLink("Index", "CPHome", "bi-house", "Home")
+                <!--end:General menu-->
+                <!--begin:LIS module menu-->
+                @if (Model.IsModuleSectionGrant("lis_module"))
+                {
+                    <li class="nav-header border-top">LIS MODULE</li>
+                    <!--Printer inventory-->
+                    <li class="nav-item">
+                        <a href="#" class="nav-link">
+                            <i class="nav-icon bi bi-printer"></i>
+                            <p>Printer Inventory<i class="nav-arrow bi bi-chevron-right"></i></p>
+                        </a>
+                        <ul class="nav nav-treeview">
+                            @Html.LISSubModuleLink(Model.RoleModules, "CSITInventoryPrinter", "Index", "CSITInventoryPrinter", "bi-clipboard-data", "Overview")
+                            @Html.LISSubModuleLink(Model.RoleModules, "CSITInventoryPrinter", "Management", "CSITInventoryPrinter", "bi-pencil-square", "Management")
+                        </ul>
+                    </li>
+                    <!--Winterm-->
+                    @*<li class="nav-item">
+                        <a href="#" class="nav-link">
+                            <i class="nav-icon bi bi-pc-display"></i>
+                            <p>Winterms<i class="nav-arrow bi bi-chevron-right"></i></p>
+                        </a>
+                        <ul class="nav nav-treeview">
+                            @Html.LISSubModuleLink(Model.RoleModules, "CSITInventory", "Index", "CSITInventoryWinterm", "bi-clipboard-data", "Overview")
+                            @Html.LISSubModuleLink(Model.RoleModules, "CSITInventory", "Index", "CSITInventoryWinterm", "bi-pc-display", "Winterms")
+                        </ul>
+                    </li>*@
+                }
+                <!--end:LIS module menu-->
+                <!--begin:Planner module menu-->
+                @if (Model.IsModuleSectionGrant("planner_module"))
+                {
+                    <li class="nav-header border-top">PLANNER MODULE</li>
+                    @Html.LISModuleLink(Model.RoleModules, "Index", "PlannerOrderManagement", "bi-receipt", "Order scheduler")
+                    @Html.LISModuleLink(Model.RoleModules, "Index", "PlannerRouteManagement", "bi-box2", "Route scheduler")
+                }
+                <!--end:Planner module menu-->
+                <!--begin:System administrator menu-->
+                @if (Model.UserAccountInfo.role_id.Equals("ADM"))
+                {
+                    <li class="nav-header border-top">SYSTEM ADMINISTRATOR</li>
+                    <li class="nav-item">
+                        <a href="#" class="nav-link">
+                            <i class="nav-icon bi bi-person-fill-gear"></i>
+                            <p>User & Roles<i class="nav-arrow bi bi-chevron-right"></i></p>
+                        </a>
+                        <ul class="nav nav-treeview">
+                            @Html.LISModuleLink("Index", "UserAccount", "bi-person-fill", "User accounts")
+                            @Html.LISModuleLink("Index", "UserAccountRole", "bi-bookmarks-fill", "User account roles")
+                        </ul>
+                    </li>
+                    <li class="nav-item">
+                        @Html.LISModuleLink("Index", "Module", "bi-box", "System Modules")
+                    </li>
+                }
+                <!--end:System administrator menu-->
+
+            </ul>
+        </nav>
+    </div>
+</aside>
+<!--end:Side menu-->

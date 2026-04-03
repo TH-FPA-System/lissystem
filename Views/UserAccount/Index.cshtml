@@ -1,0 +1,202 @@
+﻿@{
+    ViewBag.Title = "User account";
+}
+
+<div class="app-content-header">
+    <div class="container-fluid border-bottom pb-2">
+        <div class="row">
+            <div class="col-sm-6"><h3 class="mb-0"><i class="bi bi-person me-2"></i>User account</h3></div>
+            <div class="col-sm-6">
+                <ol class="breadcrumb float-sm-end">
+                    <li class="breadcrumb-item"><i class="bi bi-person-fill-gear me-1"></i>User & Roles</li>
+                    <li class="breadcrumb-item active" aria-current="page">User accounts</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="app-content">
+    <div class="container-fluid d-flex flex-row justify-content-end">
+        <button class="btn btn-sm btn-light me-1" onclick="PopupModalAdd()"><i class="bi bi-person-add me-1"></i>Add</button>
+        <button class="btn btn-sm btn-primary" onclick="TableReload()"><i class="bi bi-arrow-clockwise me-1"></i>Refresh</button>
+    </div>
+    <div class="container-fluid">
+        <table id="tblUserAccounts" class="table table-striped table-hover table-valign-middle nowrap">
+            <thead>
+                <tr>
+                    <th width="200">Account name</th>
+                    <th width="150">Code</th>
+                    <th>Display name</th>
+                    <th>Role</th>
+                    <th width="120">Disabled</th>
+                    <th width="120">Can Login</th>
+                    <th width="150">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- View data modal -->
+<div id="viewAccountInfo" class="modal fade" tabindex="-1" aria-labelledby="modalTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+    </div>
+</div>
+
+@section scripts {
+    <script>
+        var dataTable;
+        $(document).ready(function () {
+
+            /* Datatable */
+            var dataTblOptions = {
+                ajax: { url: "@Url.Action("AjaxDataLists")", type: "get" },
+                columns: [
+                    { data: 'account_name' },
+                    { data: 'code', type: 'string' },
+                    { data: 'display_name'},
+                    { data: 'role'},
+                    {
+                        data: 'disabled',
+                        render: (data, type, row) => {
+                            return data ? '<span class="badge bg-danger">Disabled</span>' : '<span class="badge bg-success">No</span>';
+                        }
+                    },
+                    {
+                        data: 'canlogin',
+                        render: (data, type, row) => {
+                            return data ? '<span class="badge bg-success">Yes</span>' : '<span class="badge bg-danger">No</span>';
+                        }
+                    },
+                    {
+                        data: null, searchable: false, orderable: false,
+                        className: 'text-center',
+                        render: (data, type, row) => {
+                            let actionButtons = ` <button class="btn btn-sm btn-link text-decoration-none text-info" onclick="PopupModalView('${row.account_id}')"><i class="bi bi-info-circle me-1"></i>View</button>`;
+                            if (row.allow_delete) {
+                                actionButtons = actionButtons + `<button class="btn btn-sm btn-link text-decoration-none text-danger" onclick="Delete(this)"><i class="bi bi-trash me-1"></i>Delete</button>`;
+                            }
+                            return actionButtons;
+                        }
+                    },
+                ],
+                buttons: [],
+                language: {
+                    info: 'Showing UserAccount on page _PAGE_ of _PAGES_ (Total _TOTAL_ accounts)',
+                    infoEmpty: 'No UserAccount available (0 account)'
+                },
+                error: function (jqXHR, statusStr, error) {
+                    let tblBody = $(dataTable.table().node()).find('tbody .dt-empty');
+                    if (jqXHR.status === 401) {
+                        tblBody.html(`<span class="text-danger">Your permission unauthorized!</span>`);
+                    } else {
+                        tblBody.html(`<span class="text-danger">${error}</span>`);
+                    }
+                }
+            };
+            dataTable = $('#tblUserAccounts').DataTable(dataTblOptions);
+
+            window.TableReload = function() {
+                dataTable.ajax.reload();
+            }
+
+            /* Popup modal view account info */
+            var viewAccountInfoQuery = '#viewAccountInfo';
+
+            window.PopupModalView = function (accountID) {
+                if (!IsNullOrEmpty(accountID)) {
+                    let modalElm = $(viewAccountInfoQuery);
+
+                    $.ajax({
+                        type: "GET",
+                        url: "@Url.Action("AjaxDataViewInfo")",
+                        data: { account_id: accountID }
+                    }).done((html) => {
+                        if (modalElm) {
+                            modalElm.find('.modal-dialog').html(html);
+
+                            let modal = new bootstrap.Modal(modalElm, {
+                                backdrop: 'static',
+                                keyboard: false
+                            });
+                            modal.show();
+                        }
+                    });
+                    return true;
+                }
+                else {
+                    return false;
+                }
+            }
+
+            window.PopupModalAdd = function () {
+                let modalElm = $(viewAccountInfoQuery);
+                $.ajax({
+                    type: "GET",
+                    url: "@Url.Action("AjaxDataAddNew")"
+                }).done((html) => {
+                    if (modalElm) {
+                        modalElm.find('.modal-dialog').html(html);
+
+                        let modal = new bootstrap.Modal(modalElm, {
+                            backdrop: 'static',
+                            keyboard: false
+                        });
+                        modal.show();
+                    }
+                });
+            }
+
+            window.Delete = function(e)
+            {
+                let row = $(e).closest('tr');
+                let data = dataTable.row(row).data();
+                if (data && data.account_id) {
+
+                    Swal.fire({
+                        theme: 'dark',
+                        title: "Are you sure?",
+                        html: `Delete account <span class="text-danger">"${data.display_name}"</span>?<br/>You won't be able to revert this!`,
+                        icon: "warning",
+                        showCancelButton: true,
+                        confirmButtonColor: "#d77125",
+                        cancelButtonColor: "#d33",
+                        confirmButtonText: "Yes, delete it!"
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            $.post('@Url.Action("AjaxDataAccountDelete")', { account_id: data.account_id })
+                                .done((data, status, jqXHR) => {
+                                    if (jqXHR.status === 200) {
+                                        TableReload();
+                                        ShowToastSuccess("User account has been deleted");
+                                    }
+                                    else {
+                                        ShowToastError("Fail to delete user account!");
+                                    }
+                                })
+                                .fail((xhr, status, error) => {
+                                    let errorData = xhr.responseJSON;
+                                    ShowToastError(`<b>${errorData.message}</b>!`, "Error", 10000);
+                                });
+                        }
+                    });
+
+                }
+            }
+
+            window.DismissPopupModal = function () {
+                let modalElm = $(viewAccountInfoQuery);
+                let modal = bootstrap.Modal.getInstance(modalElm);
+                if (modal) {
+                    modal.hide();
+                }
+            }
+
+        });
+
+
+    </script>
+}

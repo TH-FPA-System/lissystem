@@ -1,0 +1,66 @@
+{
+  "version": "3.0",
+  "defaultProvider": "cdnjs",
+  "libraries": [
+    {
+      "library": "bootstrap-icons@1.13.1",
+      "destination": "Vendors/bootstrap-icons/"
+    },
+    {
+      "library": "jquery@3.7.1",
+      "destination": "Vendors/jquery/"
+    },
+    {
+      "library": "jquery-validate@1.21.0",
+      "destination": "Vendors/jquery/plugins/query_validate/"
+    },
+    {
+      "library": "sweetalert2@11.23.0",
+      "destination": "Vendors/sweetalert2/"
+    },
+    {
+      "library": "overlayscrollbars@2.12.0",
+      "destination": "Vendors/overlayscrollbars/"
+    },
+    {
+      "library": "popper.js@2.11.8",
+      "destination": "Vendors/popperjs/"
+    },
+    {
+      "library": "bootstrap@5.3.8",
+      "destination": "Vendors/bootstrap/"
+    },
+    {
+      "library": "moment.js@2.30.1",
+      "destination": "Vendors/moment-js/"
+    },
+    {
+      "library": "select2@4.0.13",
+      "destination": "Vendors/select2/"
+    },
+    {
+      "library": "select2-bootstrap-5-theme@1.3.0",
+      "destination": "Vendors/select2/theme/"
+    },
+    {
+      "library": "jquery-toast-plugin@1.3.2",
+      "destination": "Vendors/jquery/plugins/toast/"
+    },
+    {
+      "library": "fusioncharts@4.2.0",
+      "destination": "Vendors/fusioncharts/"
+    },
+    {
+      "library": "bootstrap-daterangepicker@3.0.5",
+      "destination": "Vendors/bootstrap-daterangepicker/"
+    },
+    {
+      "library": "moment-timezone@0.6.0",
+      "destination": "Vendors/moment-js/timezone/"
+    },
+    {
+      "library": "quill@2.0.2",
+      "destination": "Vendors/quill/"
+    }
+  ]
+}

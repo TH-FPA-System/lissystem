@@ -1,0 +1,27 @@
+﻿<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="author" content="Akkapon Kaewarsa (First)." />
+    <meta name="description" content="TH-LIS management system." />
+    <title>LIS System - @ViewBag.Title</title>
+    @Styles.Render("~/AdminLTE/css")
+    @Styles.Render("~/bootstrap-icons")
+    @Styles.Render("~/lis/less")
+</head>
+<body>
+    <div class="container-fluid dark-mode">
+        <div class="app-wrapper">
+            <main class="app-main">
+                @RenderBody()
+            </main>
+        </div>
+    </div>
+    @Scripts.Render("~/AdminLTE/js")
+    @Scripts.Render("~/JQuery")
+    @Scripts.Render("~/JQuery/plugins")
+    @Scripts.Render("~/LISApp")
+</body>
+</html>

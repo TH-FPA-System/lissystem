@@ -1,0 +1,45 @@
+﻿@model IEnumerable<lissystem.Models.Data.DataInventorySummaryData>
+
+<div class="row user-select-none">
+    @foreach (var data in Model)
+    {
+        string boxColor = "text-bg-light";
+        string stockCountColor = "";
+        string safetyStockTextColor = "text-secondary";
+
+        if (data.safety_stock > 0 && data.stock_count < data.safety_stock)
+        {
+            boxColor = "text-bg-danger";
+            stockCountColor = "";
+            safetyStockTextColor = "";
+        }
+        else if (data.safety_stock > 0 && data.stock_count == data.safety_stock)
+        {
+            stockCountColor = "text-danger";
+            boxColor = "text-bg-warning";
+        }
+        else if (data.stock_count > 0) {
+            stockCountColor = "text-success";
+        }
+
+        <div class="col-lg-6 col-6">
+            <!--begin:Detail box-->
+            <div class="small-box @boxColor">
+                <!--bein:Details-->
+                <div class="inner">
+                    <h3 class="@stockCountColor">
+                        <!--Stock count-->
+                        @data.stock_count.ToString("n0")
+                        <!--Safety stock-->
+                        <span class="fs-6 @safetyStockTextColor">/@data.safety_stock.ToString("n0")</span>
+                    </h3>
+                    <p class="fw-semibold">@data.subcategory_name</p>
+                </div>
+                <!--end:Details-->
+                <!--Icon-->
+                <i class="small-box-icon bi @data.subcategory_icon top-0"></i>
+            </div>
+            <!--end:Detail box-->
+        </div>
+    }
+</div>

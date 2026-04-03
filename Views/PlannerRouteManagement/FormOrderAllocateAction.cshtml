@@ -1,0 +1,92 @@
+﻿@model lissystem.Models.Form.Planner.OrderScheduler.OrderAllocateRequest
+
+<div id="modalDetail" class="modal-content">
+    <div class="modal-header flex-column align-items-start py-2">
+        <h5 id="modalTitle" class="modal-title"><i class="bi bi-arrows-expand-vertical me-2"></i>Order Allocate serial form</h5>
+    </div>
+    <div class="modal-body px-2 py-0">
+        <form id="frmOrderAllocates" method="post" class="mt-2">
+            @Html.AntiForgeryToken()
+            <table class="table align-middle table-striped">
+                <thead>
+                    <tr>
+                        <th>Order no.</th>
+                        <th>Line no.</th>
+                        <th>Split no.</th>
+                        <th>QTY Request</th>
+                        <th>QTY ToGo</th>
+                        <th>Serial no.</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @for (int i = 0; i < Model.data.Count(); i++)
+                    {
+                        <tr>
+                            @Html.HiddenFor(p => p.data[i].order_no)
+                            @Html.HiddenFor(p => p.data[i].line_no)
+                            @Html.HiddenFor(p => p.data[i].split_no)
+                            <td>@Model.data[i].order_no</td>
+                            <td>@Model.data[i].line_no</td>
+                            <td>@Model.data[i].split_no</td>
+                            <td>@string.Format("{0:n0}", Model.data[i].qty_reqd)</td>
+                            <td>@string.Format("{0:n0}", Model.data[i].qty_inprogress)</td>
+                            <td>
+                                @Html.LISTextBoxFor(p => p.data[i].serial, new { @class = "form-control form-control-sm", @maxlength = 9, @pattern="(^[A-Z]{3}\\d{6}$|^$)" })
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </form>
+    </div>
+    <div class="modal-footer px-2 py-1">
+        <button type="button" class="btn btn-sm btn-success me-2" onclick="SubmitRequest()"><i class="bi bi-save me-1"></i>Allocate</button>
+        <button type="button" class="btn btn-sm btn-secondary" onclick="DismissPopupModal()">Cancel</button>
+    </div>
+</div>
+
+<script>
+    var frmValidate;
+    $(document).ready(function () {
+        frmValidate = $('#frmOrderAllocates').validate();
+        $('input[name^="data["][name$=".serial"]').each(function () {
+            $(this).rules('add', {
+                messages: {
+                    pattern: "Invalid serial number format."
+                }
+            });
+        });
+    });
+
+    function SubmitRequest() {
+        frmValidate.form();
+        if (frmValidate.valid()) {
+            ConfirmDialog("Are you sure?", "Confirm allocate serial to order", "warning").then((res) => {
+                if (res) {
+                    let formData = $('#frmOrderAllocates').serialize();
+                    $.post('@Url.Action("RequestOrderAllocateUpdate")', formData)
+                        .done((data, status, jqXHR) => {
+                            if (jqXHR.status === 200) {
+                                TableReload();
+                                ShowToastSuccess("The Order allocate has been updated.");
+                            }
+                            else {
+                                if (jqXHR.status === 304) {
+                                    ShowToastError("The order allocate not update!");
+                                }
+                                else {
+                                    ShowToastError("Fail to update the order allocate!");
+                                }
+                            }
+                            DismissPopupModal();
+                        })
+                        .fail((xhr, status, error) => {
+                            let errorData = xhr.responseJSON;
+                            ShowToastError(`<b>${errorData.message}</b>!`, "Error", 10000);
+                        });
+                }
+            });
+        }
+    }
+
+</script>

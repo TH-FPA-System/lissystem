@@ -1,0 +1,79 @@
+﻿@model lissystem.Models.Form.FormSystemAccountRoleView
+
+<div id="modalDetail" class="modal-content">
+    <div class="modal-header flex-column align-items-start">
+        <h5 id="modalTitle" class="modal-title"><i class="bi bi-plus-circle-fill me-1"></i>Add new user account</h5>
+    </div>
+    <div class="modal-body px-2">
+        <form id="frmUserAccountRoleEditor" method="post">
+            @Html.AntiForgeryToken()
+            <div class="row mb-2">
+                <div class="col-md-6">
+                    @Html.LabelFor(p => p.Role.role_id, "Role ID", new { @class = "form-label" })
+                    @Html.LISTextBoxFor(p => p.Role.role_id, new { @class = "form-control", @placeholder = "Enter Role id.." })
+                </div>
+            </div>
+            <div class="mb-2">
+                @Html.LabelFor(p => p.Role.description, "Description", new { @class = "form-label" })
+                @Html.LISTextBoxFor(p => p.Role.description, new { @class = "form-control", @placeholder = "Enter Role description.." })
+            </div>
+            <div class="mb-2">
+                <div class="form-check form-check-inline">
+                    @Html.LISCheckBoxFor(p => p.Role.disabled, new { @class = "form-check-input" })
+                    @Html.LabelFor(p => p.Role.disabled, "Disabled", new { @class = "form-check-label" })
+                </div>
+            </div>
+        </form>
+    </div>
+    <div class="modal-footer px-2">
+        <button type="button" class="btn btn-success me-2" onclick="SubmitFormAdd()"><i class="bi bi-floppy2 me-1"></i>Add</button>
+        <button type="button" class="btn btn-secondary" onclick="DismissPopupModalWindow()">Cancel</button>
+    </div>
+</div>
+
+<script>
+    $(document).ready(function () {
+        $('#frmUserAccountRoleEditor').validate({
+            rules: {
+                'Role.role_id': { required: true },
+                'Role.description': { required: true }
+            },
+            messages: {
+                'Role.role_id': {
+                    required: 'Required Role id!',
+                },
+                'Role.description': {
+                    required: 'Required Role description!',
+                }
+            },
+            submitHandler: function (frm) {
+                let formData = $(frm).serialize();
+                $.post('@Url.Action("AjaxDataAccountRoleAdd")', formData)
+                    .done((data, status, jqXHR) => {
+                        if (jqXHR.status === 200) {
+                            TableReload();
+                            ShowToastSuccess("User account has been added");
+                        }
+                        else {
+                            if (jqXHR.status === 304) {
+                                ShowToastError("Can't add new User account!");
+                            }
+                            else {
+                                ShowToastError("Fail to add new user account!");
+                            }
+                        }
+                        DismissPopupModalWindow();
+                    })
+                    .fail((xhr, status, error) => {
+                        let errorData = xhr.responseJSON;
+                        ShowToastError(`<b>${errorData.message}</b>!`, "Error", 10000);
+                    });
+
+            }
+        });
+    });
+
+    function SubmitFormAdd() {
+        $('#frmUserAccountRoleEditor').trigger('submit');
+    }
+</script>

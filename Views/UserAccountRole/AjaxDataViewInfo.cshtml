@@ -1,0 +1,309 @@
+﻿@model lissystem.Models.Form.FormSystemAccountRoleView
+
+<div id="modalDetail" class="modal-content">
+    <div class="modal-header flex-column align-items-start">
+        <h5 id="modalTitle" class="modal-title"><i class="bi bi-bookmarks-fill me-1"></i>Role: @Model.Role.description</h5>
+    </div>
+    <div class="modal-body px-2">
+        <ul class="nav nav-tabs" id="tabView" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="roleDetail-tab" data-bs-toggle="tab" data-bs-target="#roleDetail" role="tab" aria-controls="roleDetail" aria-selected="true"><i class="bi bi-info-circle-fill me-2"></i>Detail</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="module-tab" data-bs-toggle="tab" data-bs-target="#modulelist" role="tab" aria-controls="modulelist" aria-selected="true"><i class="bi bi-bookmarks-fill me-2"></i>Modules</button>
+            </li>
+        </ul>
+        <div class="tab-content d-flex flex-column" id="tabViewContent">
+            <!-- Role detail pane -->
+            <div class="tab-pane fade show active px-1 py-2" id="roleDetail" role="tabpanel" aria-labelledby="roleDetail-tab">
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="card shadow-none">
+                            <div class="card-header py-2">
+                                Role detial
+                            </div>
+                            <div class="card-body px-2">
+                                <form id="frmAccountRoleEditor" method="post">
+                                    @Html.AntiForgeryToken()
+                                    @Html.HiddenFor(p => p.Role.role_id)
+                                    <div class="row mb-2">
+                                        <div class="col-md-6">
+                                            <label class="form-label">Role ID</label>
+                                            <input type="text" class="form-control" value="@Model.Role.role_id" readonly />
+                                        </div>
+                                    </div>
+                                    <div class="mb-2">
+                                        @Html.LabelFor(p => p.Role.description, "Description", new { @class = "form-label" })
+                                        @Html.LISTextBoxFor(p => p.Role.description, new { @class = "form-control", @placeholder = "Enter role description..", @readonly = !Model.Role.allow_update })
+                                    </div>
+                                    <div class="mb-2">
+                                        <div class="form-check form-check-inline">
+                                            @Html.LISCheckBoxFor(p => p.Role.disabled, new { @class = "form-check-input", @disabled = !Model.Role.allow_update })
+                                            @Html.LabelFor(p => p.Role.disabled, "Disabled", new { @class = "form-check-label" })
+                                        </div>
+                                    </div>
+                                    <div class="d-flex justify-content-end">
+                                        <button type="submit" class="btn btn-success btn-sm" @(!Model.Role.allow_update ? "disabled" : "")><i class="bi bi-floppy2 me-1"></i>Update</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-9">
+                        <div class="card shadow-none">
+                            <div class="card-header py-2">
+                                <i class="bi bi-people me-1"></i>
+                                Members
+                            </div>
+                            <div class="card-body px-2">
+                                <table id="tblRoleMembers" class="table table-striped table-hover nowrap">
+                                    <thead>
+                                        <tr>
+                                            <th width="160">Code</th>
+                                            <th>Display name</th>
+                                            <th width="150">Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Module list pane -->
+            <div class="tab-pane fade px-1 py-2" id="modulelist" role="tabpanel" aria-labelledby="module-tab">
+                <table id="tblModuleList" class="table table-striped table-valign-middle table-hover nowrap">
+                    <thead>
+                        <tr>
+                            <th width="50"></th>
+                            <th width="250">Section</th>
+                            <th>Description</th>
+                            <th width="150"><i class="bi bi-pencil-square me-1"></i>Can update</th>
+                            <th width="150"><i class="bi bi-trash me-1"></i>Can delete</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="modal-footer">
+        <button type="button" class="btn btn-secondary btn-sm" onclick="DismissPopupModalWindow()">Close</button>
+    </div>
+</div>
+
+<script>
+    var dataModuleTable;
+
+    $(document).ready(function () {
+        /*
+        * Form validation
+        * https://jqueryvalidation.org/documentation/
+        */
+
+        // Account data update
+        $('#frmAccountRoleEditor').validate({
+            rules: {
+                'Role.description': {
+                    required: true
+                }
+            },
+            messages: {
+                'Role.description': {
+                    required: 'Required Role description!',
+                }
+            },
+            submitHandler: function (frm) {
+                let formData = $(frm).serialize();
+
+                $.post('@Url.Action("AjaxDataAccountRole_Update")', formData)
+                    .done((data, status, jqXHR) => {
+                        console.log(data);
+                        if ([200, 304].includes(jqXHR.status)) {
+                            TableReload();
+                            ShowToastSuccess("Account role data update successful");
+                        }
+                        else {
+                            ShowToastError("Account role data has not been updated");
+                        }
+                    })
+                    .fail((xhr, status, error) => {
+                        let errData = xhr.responseJSON;
+                        ShowToastError(`Error update account role data ${errData.message}!`);
+                    });
+            }
+        });
+
+        // Role members datatable
+        var dataTblOptions = {
+            ajax: { url: '@Url.Action("AjaxDataRoleMember", new { roleId = Model.Role.role_id })', type: 'get' },
+            pageLength: 10,
+            columns: [
+                { data: 'code', type: 'string' },
+                { data: 'display_name' },
+                {
+                    data: null, searchable: false, orderable: false,
+                    className: 'text-center',
+                    render: (data, type, row) => {
+                        let actionButtons = '';
+                        if (row.account_id !== '@LISRequest.CurrentAccountId' && row.role_id !== 'GST') {
+                            actionButtons = actionButtons + ` <button class="btn btn-sm btn-link text-decoration-none text-danger" onclick="RemoveRoleMember(this)"><i class="bi bi-trash me-1"></i>Remove</button>`;
+                        }
+                        return actionButtons;
+                    }
+                }
+            ],
+            dom: null,
+            buttons: [],
+            layout: { top: [] },
+            language: {
+                info: 'Showing Role member on page _PAGE_ of _PAGES_ (Total _TOTAL_ members)'
+            },
+        };
+        var dataTable = $('#tblRoleMembers').DataTable(dataTblOptions);
+
+        window.RemoveRoleMember = function (e) {
+            let row = $(e).closest('tr');
+            let data = dataTable.row(row).data();
+            if (data && data.account_id) {
+
+                Swal.fire({
+                    theme: 'dark',
+                    html: `Do you want to remove "<span class="fw-semibold text-danger">${data.display_name}</span>" from the grop?`,
+                    icon: "warning",
+                    showCancelButton: true,
+                    confirmButtonColor: "#d77125",
+                    cancelButtonColor: "#d33",
+                    confirmButtonText: "Yes, remove!"
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        $.post('@Url.Action("AjaxDataRoleRemoveMember", new { roleId = Model.Role.role_id })', { userId: data.account_id })
+                            .done((res, status, jqXHR) => {
+                                if (jqXHR.status === 200) {
+                                    dataTable.ajax.reload();
+                                    TableReload();
+                                    ShowToastSuccess(`"${data.display_name}" has been removed from the grop`);
+                                }
+                                else {
+                                    ShowToastError(`Fail to remove ${data.display_name} from the grop!`);
+                                }
+                            })
+                            .fail((xhr, status, error) => {
+                                let errorData = xhr.responseJSON;
+                                ShowToastError(`<b>${errorData.message}</b>!`, "Error", 10000);
+                            });
+                    }
+                });
+            }
+        }
+
+        // Role modules datatable
+        var dataModuleTblOptions = {
+            ajax: { url: '@Url.Action("AjaxDataRoleModule", new { roleId = Model.Role.role_id })', type: 'get' },
+            columns: [
+                {
+                    data: null,
+                    className: 'dt-center',
+                    defaultContent: '<input type="checkbox" class="form-check-input" onclick="RoleModuleGrantChange(this)">',
+                    orderable: false,
+                    className: 'dt-body-center',
+                    render: function (data, type, row) {
+                        if (row.IsGranted)
+                            return '<input type="checkbox" class="form-check-input" onclick="RoleModuleGrantChange(this)" checked>';
+                    }
+                },
+                { data: 'module_section' },
+                { data: 'module_description' },
+                {
+                    data: 'canwrite',
+                    className: 'dt-center',
+                    defaultContent: '<input type="checkbox" id="action" name="action_write" class="form-check-input" disabled>',
+                    render: (data, type, row) => {
+                        if (row.IsGranted) {
+                            return `<input type="checkbox" id="action" name="action_write" class="form-check-input" onclick="RoleModuleActionsGrantChange(this)" ${(data ? 'checked' : '')}>`;
+                        }
+                    }
+                },
+                {
+                    data: 'candelete',
+                    className: 'dt-center',
+                    defaultContent: '<input type="checkbox" id="action" name="action_delete" class="form-check-input" disabled>',
+                    render: (data, type, row) => {
+                        if (row.IsGranted) {
+                            return `<input type="checkbox" id="action" name="action_delete" class="form-check-input" onclick="RoleModuleActionsGrantChange(this)" ${(data ? 'checked' : '')}>`;
+                        }
+                    }
+                }
+            ],
+            order: [[1, 'asc']],
+            dom: null,
+            buttons: [],
+            layout: { top: [] },
+            language: {
+                info: 'Showing Role module permission on page _PAGE_ of _PAGES_ (Total _TOTAL_ modules)'
+            },
+        };
+        dataModuleTable = $('#tblModuleList').DataTable(dataModuleTblOptions);
+
+
+    });
+
+    function ModuleTableReload() {
+        if (dataModuleTable)
+            dataModuleTable.ajax.reload();
+    }
+
+    function RoleModuleGrantChange(e) {
+        if (dataModuleTable) {
+            let row = $(e).closest('tr');
+            let data = dataModuleTable.row(row).data();
+            let selected = $(e).is(":checked");
+            if (data) {
+
+                data.IsGranted = selected;
+
+                $.post('@Url.Action("AjaxDataRoleModuleGrant", new { roleId = Model.Role.role_id })', data)
+                    .done((data, status, jqXHR) => {
+                        ModuleTableReload();
+                        ShowToastSuccess('Grant access permission successfully.');
+                    })
+                    .fail((xhr, status, error) => {
+                        ModuleTableReload();
+                        ShowToastError('Can\'t grant module access, please try again!');
+                    });
+            }
+        }
+    }
+
+    function RoleModuleActionsGrantChange(e) {
+        if (dataModuleTable) {
+            let row = $(e).closest('tr');
+            let data = dataModuleTable.row(row).data();
+
+            let actions = $(row).find('input[type="checkbox"][id="action"]');
+            actions.each((i, elm) => {
+                let actName = $(elm).attr('name');
+                let checked = $(elm).is(':checked');
+                //console.log(`${actName}: ${checked ? 'Checked' : 'UnChecked'}`);
+                if (actName === 'action_write')
+                    data.canwrite = checked;
+                else if (actName === 'action_delete')
+                    data.candelete = checked;
+            });
+            if (data && data.IsGranted) {
+
+                $.post('@Url.Action("AjaxDataRoleModuleActionsGrant", new { roleId = Model.Role.role_id })', data)
+                    .done((data, status, jqXHR) => {
+                        ModuleTableReload();
+                        ShowToastSuccess('Grant module actions permission successfully.');
+                    })
+                    .fail((xhr, status, error) => {
+                        ModuleTableReload();
+                        ShowToastError('Can\'t grant module actions, please try again!');
+                    });
+            }
+        }
+    }
+
+</script>

@@ -1,0 +1,38 @@
+﻿@model lissystem.Models.Page.ModelInventoryPrinter
+@{
+    ViewBag.Title = "CS&IT Inventory Printers management";
+}
+
+<div class="app-content-header">
+    <div class="container-fluid border-bottom pb-2">
+        <div class="row">
+            <div class="col-sm-6"><h3 class="mb-0"><i class="bi bi-clipboard-data me-2"></i>Inventory Printer Overview</h3></div>
+            <div class="col-sm-6">
+                <ol class="breadcrumb float-sm-end">
+                    <li class="breadcrumb-item">LIS modules</li>
+                    <li class="breadcrumb-item" aria-current="page">Printer Inventory</li>
+                    <li class="breadcrumb-item active" aria-current="page">Overview</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="app-content">
+    <div class="container-fluid">
+        <!--begin:Top Summary-->
+        <div class="row">
+            <!--begin:small box-->
+            <div class="col-lg-4">
+                @Html.Partial("PartialInventorySmallBox", Model.SummaryDatas)
+            </div>
+            <!--end:small box-->
+            <div class="col-lg-8">
+                xxx
+            </div>
+        </div>
+        <!--end:Top Summary-->
+        <p>@Newtonsoft.Json.JsonConvert.SerializeObject(Model)</p>
+    </div>
+</div>
+

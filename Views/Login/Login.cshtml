@@ -1,0 +1,67 @@
+﻿@model lissystem.Models.Authentication.FormLogin
+
+@{
+    lissystem.Models.Authentication.FormLoginTemp loginTempData = TempData[LISGlobal.LIS_KEY_LOGIN_TEMP] as lissystem.Models.Authentication.FormLoginTemp;
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <base href="@Url.Content("~")" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta name="viewport" content="width=device-width" />
+    <title>LIS System - Login</title>
+    @Styles.Render("~/AdminLTE/css")
+    <link href="@Url.Content("~/Vendors/bootstrap-icons/font/bootstrap-icons.min.css")" rel="stylesheet" />
+    @*@Styles.Render("~/bootstrap-icons")*@
+    @*<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">*@
+    @Styles.Render("~/lis/less")
+</head>
+<body class="login-page" data-bs-theme="dark">
+    <div class="login-box">
+        <div class="card">
+            <div class="card-body login-card-body">
+                <p class="login-box-msg">Login to access LIS system</p>
+                @using (Html.BeginForm("LoginProcess", "Login", FormMethod.Post, new { @id = "frmLogin" }))
+                {
+                    @Html.AntiForgeryToken();
+                    @Html.HiddenFor(p => p.RedirectToUrl)
+                    <div class="input-group mb-3">
+                        <div class="input-group-text"><span class="bi bi-person-fill"></span></div>
+                        @Html.TextBoxFor(p => p.account_name, new { @class = "form-control", @placeholder = "Enter your account name..", @required = true })
+                    </div>
+                    <div class="input-group mb-3">
+                        <div class="input-group-text"><span class="bi bi-lock-fill"></span></div>
+                        @Html.PasswordFor(p => p.password, new { @class = "form-control", @placeholder = "Enter your password..", @required = true })
+                    </div>
+                    if (loginTempData != null)
+                    {
+                        <div class="alert alert-danger py-2 mb-3">
+                            <i class="bi bi-exclamation-circle-fill me-2"></i>
+                            <span>@loginTempData.ErrorMessage</span>
+                        </div>
+                    }
+                    <div class="row">
+                        <div class="col-8">
+                            <div class="form-check">
+                                @Html.CheckBoxFor(p => p.rememberMe, new { @class = "form-check-input" })
+                                @Html.LabelFor(p => p.rememberMe, "Remember Me", new { @class = "form-check-label" })
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="d-grid gap-2">
+                                <button type="submit" class="btn btn-primary">LogIn</button>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+@Scripts.Render("~/AdminLTE/js")
+@Scripts.Render("~/JQuery")
+@Scripts.Render("~/JQuery/plugins")
+@Scripts.Render("~/LISApp")
+@Scripts.Render("~/LISAppLogin")
+</body>
+</html>

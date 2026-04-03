@@ -1,0 +1,151 @@
+﻿
+@{
+    ViewBag.Title = "System modules";
+}
+
+<div class="app-content-header">
+    <div class="container-fluid border-bottom pb-2">
+        <div class="row">
+            <div class="col-sm-6"><h3 class="mb-0"><i class="bi bi-boxes me-2"></i>System modules</h3></div>
+            <div class="col-sm-6">
+                <ol class="breadcrumb float-sm-end">
+                    <li class="breadcrumb-item"><i class="bi bi-boxes me-1"></i>System Modules</li>
+                    <li class="breadcrumb-item active" aria-current="page">Modules</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="app-content">
+    <div class="container-fluid d-flex flex-row justify-content-end">
+        <button class="btn btn-sm btn-light me-1" onclick="PopupAddWindow()"><i class="bi bi-plus-lg me-1"></i>Add</button>
+        <button class="btn btn-sm btn-primary" onclick="TableReload()"><i class="bi bi-arrow-clockwise me-1"></i>Refresh</button>
+    </div>
+    <div class="container-fluid">
+        <table id="tblSysModule" class="table table-striped table-hover table-valign-middle nowrap">
+            <thead>
+                <tr>
+                    <th width="250">Section</th>
+                    <th width="250">Sub Section</th>
+                    <th width="250">Module name</th>
+                    <th>Description</th>
+                    <th width="80"><i class="bi bi-toggles me-1"></i>Status</th>
+                    <th width="150">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- View data modal -->
+<div id="viewPopupWindow" class="modal fade" tabindex="-1" aria-labelledby="modalTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+    </div>
+</div>
+
+@section scripts {
+    <script>
+    var dataTable;
+    $(document).ready(function () {
+
+        /* Datatable */
+        var dataTblOptions = {
+            ajax: { url: "@Url.Action("AjaxDataLists")", type: "get" },
+            columns: [
+                { data: 'module_section' },
+                { data: 'submodule_section' },
+                { data: 'module_name' },
+                { data: 'module_description' },
+                {
+                    data: 'disabled',
+                    render: (data, type, row) => {
+                        return data ? '<span class="badge bg-danger">Disabled</span>' : '<span class="badge bg-success">Enabled</span>';
+                    }
+                },
+                {
+                    data: null, searchable: false, orderable: false,
+                    className: 'dt-center',
+                    render: (data, type, row) => {
+                        let actionButtons = ` <button class="btn btn-sm btn-link text-decoration-none text-info" onclick="PopupViewWindow('${row.module_id}')"><i class="bi bi-info-circle me-1"></i>View</button>`;
+                        return actionButtons;
+                    }
+                },
+            ],
+            order: [[0, 'asc'], [1, 'asc'], [2, 'asc']],
+            buttons: [],
+            language: {
+                info: 'Showing system module on page _PAGE_ of _PAGES_ (Total _TOTAL_ modules)',
+                infoEmpty: 'No modules available (0 module)'
+            },
+            error: function (jqXHR, statusStr, error) {
+                let tblBody = $(dataTable.table().node()).find('tbody .dt-empty');
+                if (jqXHR.status === 401) {
+                    tblBody.html(`<span class="text-danger">Your permission unauthorized!</span>`);
+                } else {
+                    tblBody.html(`<span class="text-danger">${error}</span>`);
+                }
+            }
+        };
+        dataTable = $('#tblSysModule').DataTable(dataTblOptions);
+
+        window.TableReload = function() {
+            dataTable.ajax.reload();
+        }
+
+        /* Popup modal view account info */
+        var viewPopupQuery = '#viewPopupWindow';
+        $(viewPopupQuery).on('hidden.bs.modal', function (e) {
+            $(this).find('.modal-dialog').removeClass('modal-xl modal-lg modal-fullscreen');
+        });
+
+        window.PopupAddWindow = function () {
+            let modalElm = $(viewPopupQuery);
+            $.ajax({
+                type: "GET",
+                url: "@Url.Action("AjaxDataAddNew")"
+            }).done((html) => {
+                if (modalElm) {
+                    modalElm.find('.modal-dialog').html(html);
+
+                    let modal = new bootstrap.Modal(modalElm, {
+                        backdrop: 'static',
+                        keyboard: false
+                    });
+                    modal.show();
+                }
+            });
+        }
+
+        window.PopupViewWindow = function (moduleId) {
+            let modalElm = $(viewPopupQuery);
+            $.ajax({
+                type: "GET",
+                url: "@Url.Action("AjaxDataView")",
+                data: { module_id: moduleId }
+            }).done((html) => {
+                if (modalElm) {
+                    modalElm.find('.modal-dialog').html(html);
+
+                    let modal = new bootstrap.Modal(modalElm, {
+                        backdrop: 'static',
+                        keyboard: false
+                    });
+                    modal.show();
+                }
+            })
+        }
+
+        window.DismissPopupModal = function () {
+            let modalElm = $(viewPopupQuery);
+            let modal = bootstrap.Modal.getInstance(modalElm);
+            if (modal) {
+                modal.hide();
+            }
+        }
+
+    });
+    </script>
+}

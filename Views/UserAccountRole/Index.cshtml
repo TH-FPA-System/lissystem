@@ -1,0 +1,198 @@
+﻿@{
+    ViewBag.Title = "User account roles";
+}
+
+<div class="app-content-header">
+    <div class="container-fluid border-bottom pb-2">
+        <div class="row">
+            <div class="col-sm-6"><h3 class="mb-0"><i class="bi bi-bookmarks-fill me-2"></i>User account roles</h3></div>
+            <div class="col-sm-6">
+                <ol class="breadcrumb float-sm-end">
+                    <li class="breadcrumb-item"><i class="bi bi-person-fill-gear me-1"></i>User & roles</li>
+                    <li class="breadcrumb-item active" aria-current="page">User account roles</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="app-content">
+    <div class="container-fluid d-flex flex-row justify-content-end">
+        <button class="btn btn-sm btn-light me-1" onclick="PopupModalAdd()"><i class="bi bi-plus-lg me-1"></i>Add</button>
+        <button class="btn btn-sm btn-primary" onclick="TableReload()"><i class="bi bi-arrow-clockwise me-1"></i>Refresh</button>
+    </div>
+    <div class="container-fluid">
+        <table id="tblUserAccountRoles" class="table table-striped table-hover table-valign-middle nowrap">
+            <thead>
+                <tr>
+                    <th width="200">Role</th>
+                    <th>Description</th>
+                    <th width="150">Members</th>
+                    <th width="120">Disabled</th>
+                    <th width="150">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- View data modal -->
+<div id="viewAccountRoleInfo" class="modal fade" tabindex="-1" aria-labelledby="modalTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+    </div>
+</div>
+
+@section scripts {
+    <script>
+        var dataTable;
+        $(document).ready(function () {
+
+            /* Datatable */
+            var dataTblOptions = {
+                ajax: { url: "@Url.Action("AjaxDataLists")", type: "get" },
+                columns: [
+                    { data: 'role_id', type: 'string' },
+                    { data: 'description' },
+                    { data: 'user_inrole', type: 'num', className: 'dt-center' },
+                    {
+                        data: 'disabled',
+                        render: (data, type, row) => {
+                            return data ? '<span class="badge bg-danger">Disabled</span>' : '<span class="badge bg-success">No</span>';
+                        }
+                    },
+                    {
+                        data: null, searchable: false, orderable: false,
+                        className: 'text-center',
+                        render: (data, type, row) => {
+                            let actionButtons = ` <button class="btn btn-sm btn-link text-decoration-none text-info" onclick="PopupModalView('${row.role_id}')"><i class="bi bi-info-circle me-1"></i>View</button>`;
+                            if (row.allow_update && row.allow_delete) {
+                                actionButtons = actionButtons + `<button class="btn btn-sm btn-link text-decoration-none text-danger" onclick="Delete(this)"><i class="bi bi-trash me-1"></i>Delete</button>`;
+                            }
+                            return actionButtons;
+                        }
+                    },
+                ],
+                buttons: [],
+                columnDefs: [],
+                searchBuilder: true,
+                language: {
+                    info: 'Showing UserAccount role on page _PAGE_ of _PAGES_ (Total _TOTAL_ roles)',
+                    infoEmpty: 'No UserAccount role available (0 role)'
+                },
+                error: function (jqXHR, statusStr, error) {
+                    let tblBody = $(dataTable.table().node()).find('tbody .dt-empty');
+                    if (jqXHR.status === 401) {
+                        tblBody.html(`<span class="text-danger">Your permission unauthorized!</span>`);
+                    } else {
+                        tblBody.html(`<span class="text-danger">${error}</span>`);
+                    }
+                }
+            };
+            dataTable = $('#tblUserAccountRoles').DataTable(dataTblOptions);
+
+            window.TableReload = function() {
+                dataTable.ajax.reload();
+            }
+
+            /* Popup modal view account info */
+            var viewAccountRoleInfoQuery = '#viewAccountRoleInfo';
+            $(viewAccountRoleInfoQuery).on('hidden.bs.modal', function (e) {
+                $(this).find('.modal-dialog').removeClass('modal-xl modal-lg modal-fullscreen');
+            });
+
+            window.PopupModalView = function (roleID) {
+                if (!IsNullOrEmpty(roleID)) {
+                    let modalElm = $(viewAccountRoleInfoQuery);
+                    modalElm.find('.modal-dialog').addClass('modal-fullscreen');
+                    $.ajax({
+                        type: "GET",
+                        url: "@Url.Action("AjaxDataViewInfo")",
+                        data: { role_id: roleID }
+                    }).done((html) => {
+                        if (modalElm) {
+                            modalElm.find('.modal-dialog').html(html);
+
+                            let modal = new bootstrap.Modal(modalElm, {
+                                backdrop: 'static',
+                                keyboard: false
+                            });
+                            modal.show();
+                        }
+                    });
+                    return true;
+                }
+                else {
+                    return false;
+                }
+            }
+
+            window.PopupModalAdd = function () {
+                let modalElm = $(viewAccountRoleInfoQuery);
+                $.ajax({
+                    type: "GET",
+                    url: "@Url.Action("AjaxDataAddNew")"
+                }).done((html) => {
+                    if (modalElm) {
+                        modalElm.find('.modal-dialog').html(html);
+
+                        let modal = new bootstrap.Modal(modalElm, {
+                            backdrop: 'static',
+                            keyboard: false
+                        });
+                        modal.show();
+                    }
+                });
+            }
+
+            window.Delete = function(e)
+            {
+                let row = $(e).closest('tr');
+                let data = dataTable.row(row).data();
+                if (data && data.role_id) {
+
+                    Swal.fire({
+                        theme: 'dark',
+                        title: "Are you sure?",
+                        html: `Delete role <span class="text-danger">"${data.description}"</span>?<br/>You won't be able to revert this!`,
+                        icon: "warning",
+                        showCancelButton: true,
+                        confirmButtonColor: "#d77125",
+                        cancelButtonColor: "#d33",
+                        confirmButtonText: "Yes, delete it!"
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            $.post('@Url.Action("AjaxDataAccountRoleDelete")', { role_id: data.role_id })
+                                .done((data, status, jqXHR) => {
+                                    if (jqXHR.status === 200) {
+                                        TableReload();
+                                        ShowToastSuccess("Account role has been deleted");
+                                    }
+                                    else {
+                                        ShowToastError("Fail to delete account role!");
+                                    }
+                                })
+                                .fail((xhr, status, error) => {
+                                    let errorData = xhr.responseJSON;
+                                    ShowToastError(`<b>${errorData.message}</b>!`, "Error", 10000);
+                                });
+                        }
+                    });
+
+                }
+            }
+
+            window.DismissPopupModalWindow = function () {
+                let modalElm = $(viewAccountRoleInfoQuery);
+                let modal = bootstrap.Modal.getInstance(modalElm);
+                if (modal) {
+                    modal.hide();
+                }
+            }
+
+        });
+
+
+    </script>
+}
