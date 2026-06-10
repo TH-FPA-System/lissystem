@@ -10,6 +10,7 @@ using System.Data.Entity;
 using lissystem.Models.Thailis;
 using lissystem.Models.Form.Planner.OrderScheduler;
 using System.Data.Entity.Infrastructure;
+using lissystem.App_Utilities;
 namespace lissystem.App_Services
 {
     public class ThaiLisOrderService
@@ -125,7 +126,9 @@ namespace lissystem.App_Services
             var keyList = string.Join(", ", orders.Select(p => $"({p.order_no}, {p.line_no}, {p.split_no})").Distinct());
             string rawSQLQuery = $@"
                 SELECT
-                    sod.*
+                    sod.order_no, sod.order_type, sod.line_no, sod.order_company, sod.split_no, sod.line_type, 
+                    sod.part, sod.date_reqd, sod.qty_reqd, sod.qty_in_progress, sod.qty_routed, sod.ship_to, sod.shipment_no, 
+                    sod.sch_priority, sod.sch_status, sod.route_priority, sod.route_status, sod.serial, sod.last_maint, sod.last_maint_logon 
                 FROM dbo.sales_order_detail sod
                 WHERE
                     {(onlyNotCompleted ? "(sod.qty_reqd - sod.qty_in_progress) > 0 AND " : "")}
@@ -207,6 +210,8 @@ namespace lissystem.App_Services
                         int originalOrderRequestQTY = order.qty_reqd;
                         DateTime originalOrderLastMaint = order.last_maint;
                         string originalOrderLastMaintLogon = order.last_maint_logon;
+                        bool isAirShip = order.last_maint_logon.EndsWith(",AIR");
+                        string actionByName = isAirShip ? string.Concat(userAccount.SafeSubString(0, 8), ",AIR") : userAccount.SafeSubString(0, 12);
 
                         currentOrderSplitLoopIndex = 0;
 
@@ -274,7 +279,7 @@ namespace lissystem.App_Services
                                         route_priority = order.route_priority,
                                         route_status = order.route_status,
                                         serial = string.Empty,
-                                        last_maint_logon = userAccount,
+                                        last_maint_logon = actionByName,
                                         last_maint = DateTime.Now,
                                     };
 
@@ -290,7 +295,7 @@ namespace lissystem.App_Services
                                     else
                                         order.qty_reqd = currentBatchQTY;
 
-                                    order.last_maint_logon = userAccount;
+                                    order.last_maint_logon = actionByName;
                                     order.last_maint = DateTime.Now;
 
                                     db.UpdateEntityModel(order);
@@ -399,12 +404,14 @@ namespace lissystem.App_Services
                             .FirstOrDefault();
 
                         int newQtyToGo = order.qty_reqd - requestAdjustment.qty_togo;
+                        bool isAirShip = order.last_maint_logon.EndsWith(",AIR");
+                        string actionByName = isAirShip ? string.Concat(userAccount.SafeSubString(0, 8), ",AIR") : userAccount.SafeSubString(0, 12);
 
                         if (requestAdjustment != null)
                         {
                             db.SalesOrderDetails.Attach(order);
                             order.qty_in_progress = newQtyToGo;
-                            order.last_maint_logon = userAccount;
+                            order.last_maint_logon = actionByName;
                             order.last_maint = DateTime.Now;
 
                             db.UpdateEntityModel(order);
@@ -468,11 +475,14 @@ namespace lissystem.App_Services
                             .Where(p => p.order_no == order.order_no && p.line_no == order.line_no && p.split_no == order.split_no)
                             .FirstOrDefault();
 
+                        bool isAirShip = order.last_maint_logon.EndsWith(",AIR");
+                        string actionByName = isAirShip ? string.Concat(userAccount.SafeSubString(0, 8), ",AIR") : userAccount.SafeSubString(0, 12);
+
                         if (requestUpdate != null)
                         {
                             db.SalesOrderDetails.Attach(order);
                             order.sch_priority = requestUpdate.priority;
-                            order.last_maint_logon = userAccount;
+                            order.last_maint_logon = actionByName;
                             order.last_maint = DateTime.Now;
 
                             db.UpdateEntityModel(order);
@@ -536,11 +546,14 @@ namespace lissystem.App_Services
                             .Where(p => p.order_no == order.order_no && p.line_no == order.line_no && p.split_no == order.split_no)
                             .FirstOrDefault();
 
+                        bool isAirShip = order.last_maint_logon.EndsWith(",AIR");
+                        string actionByName = isAirShip ? string.Concat(userAccount.SafeSubString(0, 8), ",AIR") : userAccount.SafeSubString(0, 12);
+
                         if (requestUpdate != null)
                         {
                             db.SalesOrderDetails.Attach(order);
                             order.sch_status = requestUpdate.status;
-                            order.last_maint_logon = userAccount;
+                            order.last_maint_logon = actionByName;
                             order.last_maint = DateTime.Now;
 
                             db.UpdateEntityModel(order);
@@ -604,6 +617,9 @@ namespace lissystem.App_Services
                             .Where(p => p.order_no == order.order_no && p.line_no == order.line_no && p.split_no == order.split_no)
                             .FirstOrDefault();
 
+                        bool isAirShip = order.last_maint_logon.EndsWith(",AIR");
+                        string actionByName = isAirShip ? string.Concat(userAccount.SafeSubString(0, 8), ",AIR") : userAccount.SafeSubString(0, 12);
+
                         if (requestUpdate != null)
                         {
                             db.SalesOrderDetails.Attach(order);
@@ -612,7 +628,7 @@ namespace lissystem.App_Services
                             order.sch_status = "H";
                             order.route_status = "H";
                             order.serial = "CANCELED";
-                            order.last_maint_logon = userAccount;
+                            order.last_maint_logon = actionByName;
                             order.last_maint = DateTime.Now;
 
                             db.UpdateEntityModel(order);
@@ -754,7 +770,9 @@ namespace lissystem.App_Services
             var keyList = string.Join(", ", orders.Select(p => $"({p.order_no}, {p.line_no}, {p.split_no})").Distinct());
             string rawSQLQuery = $@"
                 SELECT
-                    sod.*
+                    sod.order_no, sod.order_type, sod.line_no, sod.order_company, sod.split_no, sod.line_type, 
+                    sod.part, sod.date_reqd, sod.qty_reqd, sod.qty_in_progress, sod.qty_routed, sod.ship_to, sod.shipment_no, 
+                    sod.sch_priority, sod.sch_status, sod.route_priority, sod.route_status, sod.serial, sod.last_maint, sod.last_maint_logon
                 FROM dbo.sales_order_detail sod
                 WHERE
                     {(onlyNotCompleted ? "(sod.qty_reqd - sod.qty_routed) > 0 AND " : "")}
@@ -800,12 +818,14 @@ namespace lissystem.App_Services
                             .FirstOrDefault();
 
                         int newQtyToGo = order.qty_reqd - requestAdjustment.qty_togo;
+                        bool isAirShip = order.last_maint_logon.EndsWith(",AIR");
+                        string actionByName = isAirShip ? string.Concat(userAccount.SafeSubString(0, 8), ",AIR") : userAccount.SafeSubString(0, 12);
 
                         if (requestAdjustment != null)
                         {
                             db.SalesOrderDetails.Attach(order);
                             order.qty_routed = newQtyToGo;
-                            order.last_maint_logon = userAccount;
+                            order.last_maint_logon = actionByName;
                             order.last_maint = DateTime.Now;
 
                             db.UpdateEntityModel(order);
@@ -869,11 +889,14 @@ namespace lissystem.App_Services
                             .Where(p => p.order_no == order.order_no && p.line_no == order.line_no && p.split_no == order.split_no)
                             .FirstOrDefault();
 
+                        bool isAirShip = order.last_maint_logon.EndsWith(",AIR");
+                        string actionByName = isAirShip ? string.Concat(userAccount.SafeSubString(0, 8), ",AIR") : userAccount.SafeSubString(0, 12);
+
                         if (requestUpdate != null)
                         {
                             db.SalesOrderDetails.Attach(order);
                             order.route_priority = requestUpdate.priority;
-                            order.last_maint_logon = userAccount;
+                            order.last_maint_logon = actionByName;
                             order.last_maint = DateTime.Now;
 
                             db.UpdateEntityModel(order);
@@ -937,11 +960,14 @@ namespace lissystem.App_Services
                             .Where(p => p.order_no == order.order_no && p.line_no == order.line_no && p.split_no == order.split_no)
                             .FirstOrDefault();
 
+                        bool isAirShip = order.last_maint_logon.EndsWith(",AIR");
+                        string actionByName = isAirShip ? string.Concat(userAccount.SafeSubString(0, 8), ",AIR") : userAccount.SafeSubString(0, 12);
+
                         if (requestUpdate != null)
                         {
                             db.SalesOrderDetails.Attach(order);
                             order.route_status = requestUpdate.status;
-                            order.last_maint_logon = userAccount;
+                            order.last_maint_logon = actionByName;
                             order.last_maint = DateTime.Now;
 
                             db.UpdateEntityModel(order);
@@ -1009,6 +1035,8 @@ namespace lissystem.App_Services
                         int originalOrderRouteQTY = order.qty_routed;
                         DateTime originalOrderLastMaint = order.last_maint;
                         string originalOrderLastMaintLogon = order.last_maint_logon;
+                        bool isAirShip = order.last_maint_logon.EndsWith(",AIR");
+                        string actionByName = isAirShip ? string.Concat(userAccount.SafeSubString(0, 8), ",AIR") : userAccount.SafeSubString(0, 12);
 
                         var requestUpdate = orders
                             .Where(p => p.order_no == order.order_no && p.line_no == order.line_no && p.split_no == order.split_no)
@@ -1017,7 +1045,7 @@ namespace lissystem.App_Services
                         if (requestUpdate != null && requestUpdate.serial != order.serial)
                         {
                             db.SalesOrderDetails.Attach(order);
-                            order.last_maint_logon = userAccount;
+                            order.last_maint_logon = actionByName;
                             order.last_maint = DateTime.Now;
 
                             // Deallocate serial (If serial number is empty).
@@ -1097,7 +1125,7 @@ namespace lissystem.App_Services
                                                     route_priority = order.route_priority,
                                                     route_status = order.route_status,
                                                     serial = requestUpdate.serial,
-                                                    last_maint_logon = userAccount,
+                                                    last_maint_logon = actionByName,
                                                     last_maint = DateTime.Now
                                                 };
                                                 db.SalesOrderDetails.Add(newSplitOrder);

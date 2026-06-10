@@ -3054,6 +3054,7 @@
     <Compile Include="App_Start\BundleConfig.cs" />
     <Compile Include="App_Interface\LISGlobalErrorHandler.cs" />
     <Compile Include="App_Start\RouteConfig.cs" />
+    <Compile Include="App_Utilities\LISExtensions.cs" />
     <Compile Include="App_Utilities\LISHtmlHelper.cs" />
     <Compile Include="App_Utilities\LISRequest.cs" />
     <Compile Include="Controllers\Authentication\LoginController.cs" />
