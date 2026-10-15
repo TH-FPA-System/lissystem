@@ -11,6 +11,7 @@ using lissystem.Models.Thailis;
 using lissystem.Models.Form.Planner.OrderScheduler;
 using System.Data.Entity.Infrastructure;
 using lissystem.App_Utilities;
+using lissystem.Models;
 namespace lissystem.App_Services
 {
     public class ThaiLisOrderService
@@ -144,6 +145,45 @@ namespace lissystem.App_Services
         }
 
         /// <summary>
+        /// Get sale order details from Split order with product except request.
+        /// </summary>
+        /// <param name="orders"></param>
+        /// <param name="prodExcepts"></param>
+        /// <param name="onlyNotCompleted"></param>
+        /// <returns>IEnumerable ThaiLis_SalesOrderDetail</returns>
+        public async Task<IEnumerable<ThaiLis_SalesOrderDetail>> GetByOrderSplitRequestWithProdExcepts(IEnumerable<OrderSplit_Order> orders, IEnumerable<PlannerOrderSplitProdExcept> prodExcepts, bool onlyNotCompleted = true)
+        {
+            var keyList = string.Join(", ", orders.Select(p => $"({p.order_no}, {p.line_no}, {p.split_no})").Distinct());
+            if (prodExcepts == null || prodExcepts.Count() == 0)
+            { 
+                return await GetByOrderSplitRequest(orders);
+            }
+
+            var productExpects = string.Join(", ", prodExcepts.Select(p => $"('{p.product_class}', '{p.product_subclass}')").ToList());
+            string rawSQLQuery = $@"
+                SELECT
+                    sod.order_no, sod.order_type, sod.line_no, sod.order_company, sod.split_no, sod.line_type, 
+                    sod.part, sod.date_reqd, sod.qty_reqd, sod.qty_in_progress, sod.qty_routed, sod.ship_to, sod.shipment_no, 
+                    sod.sch_priority, sod.sch_status, sod.route_priority, sod.route_status, sod.serial, sod.last_maint, sod.last_maint_logon 
+                FROM dbo.sales_order_detail sod
+                JOIN dbo.part p ON sod.part = p.part
+                JOIN dbo.part_property_data ppdSC ON p.part = ppdSC.part AND ppdSC.property = 'SUBCLASS'
+                FULL OUTER JOIN (SELECT * FROM (VALUES {productExpects}) AS KeysToMatch(prod_class, prod_subclass)) prodE ON p.class = prodE.prod_class AND ppdSC.property_value = prodE.prod_subclass
+                WHERE
+                    {(onlyNotCompleted ? "(sod.qty_reqd - sod.qty_in_progress) > 0 AND " : "")}
+                    EXISTS (
+                        SELECT 1 FROM (VALUES {keyList}) AS KeysToMatch(OrderNum, LineNum, SplitNum)
+                        WHERE 
+                            OrderNum = sod.order_no AND LineNum = sod.line_no AND SplitNum = sod.split_no
+                    )
+                    AND prodE.prod_class IS NULL
+                ORDER BY sod.order_no, sod.line_no, sod.split_no ASC
+                ";
+            var saleOrders = await db.Database.SqlQuery<ThaiLis_SalesOrderDetail>(rawSQLQuery).ToListAsync();
+            return saleOrders;
+        }
+
+        /// <summary>
         /// Get max split number of order line from Split order request.
         /// </summary>
         /// <param name="orders"></param>
@@ -186,9 +226,14 @@ namespace lissystem.App_Services
         /// </summary>
         /// <param name="orders"></param>
         /// <returns>bool (Success or Unsuccess)</returns>
-        public async Task<bool> SplitOrderRequest(IEnumerable<OrderSplit_Order> orders)
+        public async Task<bool> SplitOrderRequest(IEnumerable<OrderSplit_Order> orders, IEnumerable<PlannerOrderSplitProdExcept> productExcepts = null)
         {
-            var orderToSplit = await GetByOrderSplitRequest(orders);
+            IEnumerable<ThaiLis_SalesOrderDetail> orderToSplit;
+            if (productExcepts == null || productExcepts.Count() == 0)
+                orderToSplit = await GetByOrderSplitRequest(orders);
+            else
+                orderToSplit = await GetByOrderSplitRequestWithProdExcepts(orders, productExcepts);
+
             var maxSplitOfOrderLine = await GetMaxSplitNoOfOrderLine(orders);
 
             string userAccount = LISRequest.CurrentAccountInfo.UserAccount.account_name;

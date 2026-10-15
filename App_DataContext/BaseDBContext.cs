@@ -27,6 +27,7 @@ namespace lissystem.App_DataContext
         public DbSet<UserAccountRole> UserAccountRoles { get; set; }
         public DbSet<UserAccountSession> UserAccountSessions { get; set; }
 
+        public DbSet<PlannerOrderSplitProdExcept> PlannerOrderSplitProdClassExcepts { get; set; }
         public DbSet<ProductClass> ProductClasses { get; set; }
 
         protected override void OnModelCreating(DbModelBuilder modelBuilder)
@@ -37,6 +38,7 @@ namespace lissystem.App_DataContext
             modelBuilder.Entity<inventory>().ToTable("lis_inv_lists");
             modelBuilder.Entity<inventory_subcategory>().ToTable("lis_inv_subcategories");
 
+            modelBuilder.Entity<PlannerOrderSplitProdExcept>().ToTable("planner_order_split_prod_excepts");
             modelBuilder.Entity<ProductClass>().ToTable("product_class");
 
             modelBuilder.Entity<SysModuleRole>().ToTable("sys_module_roles");

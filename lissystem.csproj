@@ -3047,6 +3047,7 @@
     <Compile Include="App_Interface\LISRoleProvider.cs" />
     <Compile Include="App_Interface\LISWebMarkup.cs" />
     <Compile Include="App_Services\InventoryService.cs" />
+    <Compile Include="App_Services\PlannerOrderManagementService.cs" />
     <Compile Include="App_Services\SysModuleService.cs" />
     <Compile Include="App_Services\ThaiLisOrderService.cs" />
     <Compile Include="App_Services\UserAccountRoleService.cs" />
@@ -3097,6 +3098,7 @@
     <Compile Include="Models\inventory_subcategory.cs" />
     <Compile Include="Models\inventory.cs" />
     <Compile Include="Models\Page\ModelInventoryPrinter.cs" />
+    <Compile Include="Models\PlannerOrderSplitProdExcept.cs" />
     <Compile Include="Models\ProductClass.cs" />
     <Compile Include="Models\SysModule.cs" />
     <Compile Include="Models\SysModuleRole.cs" />

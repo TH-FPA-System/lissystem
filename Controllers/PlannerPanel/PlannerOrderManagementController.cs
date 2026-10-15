@@ -18,10 +18,12 @@ namespace lissystem.Controllers.PlannerPanel
     [LISAuth, RoutePrefix("cpanel/planner/order-management")]
     public class PlannerOrderManagementController : LISController
     {
+        private PlannerOrderManagementService orderManagementService;
         private ThaiLisOrderService orderService;
 
         public PlannerOrderManagementController()
         {
+            orderManagementService = new PlannerOrderManagementService();
             orderService = new ThaiLisOrderService();
         }
 
@@ -60,7 +62,8 @@ namespace lissystem.Controllers.PlannerPanel
         public async Task<ActionResult> FormOrderSplitAction(OrderSplitFormRequest model)
         {
             var requestSplits = model.data.ToList().Distinct();
-            var orderSelected = await orderService.GetByOrderSplitRequest(requestSplits);
+            var productExpects = await orderManagementService.GetOrderSplitProductExcepts();
+            var orderSelected = await orderService.GetByOrderSplitRequestWithProdExcepts(requestSplits, productExpects);
 
             model.data = orderSelected.Select(p => new OrderSplit_Order
             {
@@ -225,7 +228,9 @@ namespace lissystem.Controllers.PlannerPanel
                 return JsonResult(LISGlobal.AJAX_RESULT_NOTACCEPT, "Invalid request parameter", System.Net.HttpStatusCode.NotAcceptable);
             }
 
-            var split = await orderService.SplitOrderRequest(requestOrderToSplit);
+            var productExpects = await orderManagementService.GetOrderSplitProductExcepts();
+            var split = await orderService.SplitOrderRequest(requestOrderToSplit, productExpects);
+
             if (split)
             {
                 return JsonResult(LISGlobal.AJAX_RESULT_OK, "");
